@@ -3,16 +3,12 @@
     <input type='file' @change='readMidi'/>
     <button @click='play'>play</button>
     <button @click='pause'>pause</button>
+    <button @click='stop'>stop</button>
+    <div class="tune-wrap">
+      <tune :midi='midi' />
+    </div>
     <div class="kb-wrap">
-      <KB keyName='a' :playing='playing.a'></KB>
-      <KB keyName='s' :playing='playing.s'></KB>
-      <KB keyName='d' :playing='playing.d'></KB>
-      <KB keyName='f' :playing='playing.f'></KB>
-      <KB keyName='g' :playing='playing.g'></KB>
-      <KB keyName='h' :playing='playing.h'></KB>
-      <KB keyName='j' :playing='playing.j'></KB>
-      <KB keyName='k' :playing='playing.k'></KB>
-      <KB keyName='l' :playing='playing.l'></KB>
+      <keyboard />
     </div>
   </div>
 </template>
@@ -22,7 +18,9 @@
   import KB from './singleKeyboard.vue'
   import Tone from 'tone'
   import {load, parse} from 'midiconvert'
-  let midi = null
+  import keyboard from './keyboard/keyboard.vue'
+  import event from './keyboard/keyBus'
+  import tune from './tune/tune.vue'
 
   export default {
     data () {
@@ -38,7 +36,8 @@
           k: false,
           l: false
         },
-        loaded: false
+        loaded: false,
+        midi: null
       }
     },
     methods: {
@@ -48,7 +47,7 @@
         const reader = new FileReader()
 
         reader.onload = e => {
-          midi = parse(e.target.result)
+          this.midi = parse(e.target.result)
           this.play()
         }
 
@@ -56,15 +55,17 @@
       },
 
       play () {
-        if (midi) {
+        if (this.midi) {
           if (!this.loaded) {
             let synth = new Tone.PolySynth(8).toMaster()
 
-            Tone.Transport.bpm.value = midi.header.bpm
+            Tone.Transport.bpm.value = this.midi.header.bpm
 
-            for (let {notes} of midi.tracks) {
+            for (let {notes} of this.midi.tracks) {
+              console.log(notes)
               new Tone.Part(function (time, note) {
-                synth.triggerAttackRelease(note.name, note.duration, time, note.velocity)
+                event.$emit(`attackRelease-${note.name}`, note.duration)
+                synth.triggerAttackRelease(note.name, note.duration, Tone.now(), note.velocity)
               }, notes).start()
             }
             this.loaded = true
@@ -76,11 +77,15 @@
 
       pause () {
         Tone.Transport.pause()
+      },
+
+      stop () {
+        Tone.Transport.stop()
       }
 
     },
 
-    components: {KB},
+    components: {KB, keyboard, tune},
 
     mounted () {
       document.addEventListener('keydown', e => {
@@ -98,9 +103,6 @@
   }
 </script>
 
-<style scoped>
-    .kb-wrap {
-        display: flex
-     }
+<style>
 
 </style>
