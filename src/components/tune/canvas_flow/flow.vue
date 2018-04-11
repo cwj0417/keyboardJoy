@@ -5,8 +5,13 @@
   import colors from '../../../config/colors'
   import kbConfig from '../../keyboard/config'
   import event from '../../eventBus'
-  let lastPlay = Date.now()
+
+  let startTime = null
+  let curTime = null
   let isPlaying = false
+  let isPaused = false
+  let isStopped = true
+  let isPausing = false
 
   let kbMap = {}
   for (let {name, pos} of kbConfig) {
@@ -31,15 +36,27 @@
       return
     }
     ctx.beginPath()
-    const w = width * 0.0192308
+    const uw = width * 0.0192308
 
     const rectPath = (name, time, duration, colors) => {
       const color = name.length === 2 ? colors[0] : colors[1]
-      let kw = name.length === 2 ? w : w - 8
+      let kw = name.length === 2 ? uw : uw - 8
       let sp = name.length === 2 ? height - (time + duration - current) * tickHeight : height - (time + duration - current) * tickHeight - 4
 
-      ctx.rect(kbMap[name] * w, sp, kw, tickHeight * duration)
+      let x = kbMap[name] * uw
+      let y = sp
+      let w = kw
+      let h = tickHeight * duration
+      let r = Math.min(w, h) / 2
+
+      ctx.moveTo(x + r, y)
+      ctx.arcTo(x + w, y, x + w, y + h, r)
+      ctx.arcTo(x + w, y + h, x, y + h, r)
+      ctx.arcTo(x, y + h, x, y, r)
+      ctx.arcTo(x, y, x + w, y, r)
+
       ctx.fillStyle = color
+      ctx.strokeStyle = '#333'
       ctx.closePath()
       ctx.fill()
       ctx.beginPath()
@@ -63,14 +80,32 @@
     mounted () {
       // audio status
       event.$on('play', () => {
-        lastPlay = Date.now()
+        if (isStopped) {
+          startTime = Date.now()
+        }
+        if (isPaused) {
+          startTime += Date.now() - curTime
+        }
         isPlaying = true
+        isPaused = false
+        isPausing = false
+        isStopped = false
       })
       event.$on('pause', () => {
-        isPlaying = false
+        if (isPlaying) {
+          curTime = Date.now()
+          isPlaying = false
+          isPaused = true
+          isPausing = false
+          isStopped = false
+        }
       })
       event.$on('stop', () => {
+        startTime = null
         isPlaying = false
+        isPaused = false
+        isPausing = false
+        isStopped = true
       })
       // canvas
       let [width, height] = getCanvasSize(this.$el)
@@ -82,7 +117,21 @@
 
       const loop = () => {
         clear(ctx, width, height)
-        render(ctx, this.midi, height, width, 200, (Date.now() - lastPlay) / 1000)
+
+        let currentPlayTime
+        if (isPlaying) {
+          currentPlayTime = Date.now() - startTime
+        }
+        if (isPaused) {
+          currentPlayTime = curTime - startTime
+        }
+        if (isStopped) {
+          currentPlayTime = 0
+        }
+        currentPlayTime /= 1000
+
+        render(ctx, this.midi, height, width, 200, currentPlayTime)
+
         requestAnimationFrame(loop)
       }
       requestAnimationFrame(loop)
