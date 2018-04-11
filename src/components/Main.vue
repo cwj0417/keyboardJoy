@@ -19,7 +19,7 @@
   import Tone from 'tone'
   import {load, parse} from 'midiconvert'
   import keyboard from './keyboard/keyboard.vue'
-  import event from './keyboard/keyBus'
+  import event from './eventBus'
   import tune from './tune/tune.vue'
 
   export default {
@@ -62,7 +62,6 @@
             Tone.Transport.bpm.value = this.midi.header.bpm
 
             for (let {notes} of this.midi.tracks) {
-              console.log(notes)
               new Tone.Part(function (time, note) {
                 event.$emit(`attackRelease-${note.name}`, note.duration)
                 synth.triggerAttackRelease(note.name, note.duration, Tone.now(), note.velocity)
@@ -70,16 +69,18 @@
             }
             this.loaded = true
           }
-
+          event.$emit('play')
           Tone.Transport.start()
         }
       },
 
       pause () {
+        event.$emit('pause')
         Tone.Transport.pause()
       },
 
       stop () {
+        event.$emit('stop')
         Tone.Transport.stop()
       }
 

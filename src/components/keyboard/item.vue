@@ -5,7 +5,8 @@
 </template>
 <script type='text/ecmascript-6'>
   // key width was based on 100 / 52 %
-  import event from './keyBus'
+  import event from '../eventBus'
+
   export default {
     data () {
       return {
