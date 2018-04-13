@@ -15,12 +15,13 @@
 
 <script type='text/ecmascript-6'>
   import play from '../api/play'
-  import KB from './singleKeyboard.vue'
   import Tone from 'tone'
   import {load, parse} from 'midiconvert'
   import keyboard from './keyboard/keyboard.vue'
   import event from './eventBus'
   import tune from './tune/tune.vue'
+
+  // todo: load from url
 
   export default {
     data () {
@@ -48,6 +49,7 @@
 
         reader.onload = e => {
           this.midi = parse(e.target.result)
+          this.loaded = false
           this.play()
         }
 
@@ -58,6 +60,9 @@
         if (this.midi) {
           if (!this.loaded) {
             let synth = new Tone.PolySynth(8).toMaster()
+
+            this.stop()
+            Tone.Transport.cancel(0)
 
             Tone.Transport.bpm.value = this.midi.header.bpm
 
@@ -86,7 +91,7 @@
 
     },
 
-    components: {KB, keyboard, tune},
+    components: {keyboard, tune},
 
     mounted () {
       document.addEventListener('keydown', e => {
