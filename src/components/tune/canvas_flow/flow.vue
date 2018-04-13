@@ -41,9 +41,9 @@
     const rectPath = (name, time, duration, colors) => {
       const color = name.length === 2 ? colors[0] : colors[1]
       let kw = name.length === 2 ? uw : uw - 8
-      let sp = name.length === 2 ? height - (time + duration - current) * tickHeight : height - (time + duration - current) * tickHeight - 4
+      let sp = height - (time + duration - current) * tickHeight
 
-      let x = kbMap[name] * uw
+      let x = name.length === 2 ? kbMap[name] * uw : kbMap[name] * uw + 4
       let y = sp
       let w = kw
       let h = tickHeight * duration
