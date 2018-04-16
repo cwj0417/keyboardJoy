@@ -16,27 +16,14 @@
 <script type='text/ecmascript-6'>
   import play from '../api/play'
   import Tone from 'tone'
-  import {load, parse} from 'midiconvert'
+  import {parse} from 'midiconvert'
   import keyboard from './keyboard/keyboard.vue'
   import event from './eventBus'
   import tune from './tune/tune.vue'
 
-  // todo: load from url
-
   export default {
     data () {
       return {
-        playing: {
-          a: false,
-          s: false,
-          d: false,
-          f: false,
-          g: false,
-          h: false,
-          j: false,
-          k: false,
-          l: false
-        },
         loaded: false,
         midi: null
       }
@@ -110,5 +97,9 @@
 </script>
 
 <style>
-
+  button {
+      height: 25px;
+      line-height: 25px;
+      font-size: 25px;
+  }
 </style>
